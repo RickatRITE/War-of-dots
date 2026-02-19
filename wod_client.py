@@ -1,6 +1,9 @@
+#! /usr/bin/env python
+
 import json
 
 import pygame
+import typer
 
 import simple_socket
 from constants import (
@@ -210,8 +213,7 @@ class Game:
 
         self.terrain_by_zoom = {}
 
-    def run_game(self):
-        ip, port = input("ip\n: "), input("\nport\n: ")
+    def run_game(self, ip: str, port: int):
         print("connecting...")
         self.client = simple_socket.Client(ip, PORTS[min(99, max(0, int(port)))])
         self.client.connect()
@@ -587,5 +589,10 @@ class Game:
         self.screen.blit(fog, (offset_x, offset_y))
 
 
-game_play = Game("WAR OF DOTS")
-game_play.run_game()
+def main(ip: str = "", port: int = 0) -> None:
+    game_play = Game("WAR OF DOTS")
+    game_play.run_game(ip, port)
+
+
+if __name__ == "__main__":
+    typer.run(main)
