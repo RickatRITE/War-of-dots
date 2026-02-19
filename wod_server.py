@@ -8,6 +8,7 @@ import threading
 import time
 
 import perlin_noise
+import typer
 
 import simple_socket
 from constants import (
@@ -654,13 +655,9 @@ class Game:
         self.player_pause_requests = [False for i in range(PLAYERS)]
         self.started = False
 
-    def run_game(self):
+    def run_game(self, port: int = 0):
         self.ready = True
-        try:
-            port = int(input("Enter port to use (0 - 99): "))
-            self.server.port = PORTS[max(0, min(99, port))]
-        except ValueError:
-            pass
+        self.server.port = PORTS[port]
         print("ip: ", self.server.ip, ", port: ", self.server.port)
         print("starting server...")
         self.server.start()
@@ -741,10 +738,10 @@ class Game:
         self.ready = True
 
 
-def main() -> None:
+def main(port: int = 0) -> None:
     game_play = Game()
-    game_play.run_game()
+    game_play.run_game(port)
 
 
 if __name__ == "__main__":
-    main()
+    typer.run(main)
