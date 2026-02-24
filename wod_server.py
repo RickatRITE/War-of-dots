@@ -256,7 +256,7 @@ class Environment:
                 self.forest_marching.grid[x][y] = (value - (plains_diff * 10)) - hill_diff * 10
 
         def within_edges(cx: int, cy: int) -> bool:
-            edge_margin = int(1)
+            edge_margin = 1
             return (
                 cx >= edge_margin
                 and cx <= ROWS - edge_margin
