@@ -25,14 +25,14 @@ from constants import (
 )
 
 
-def dir_dis_to_xy(direction, distance):
+def dir_dis_to_xy(direction: float, distance: float) -> tuple[float, float]:
     return (
         (distance * math.cos(math.radians(direction))),
         (distance * math.sin(math.radians(direction))),
     )
 
 
-def xy_to_dir_dis(xy):
+def xy_to_dir_dis(xy: tuple[float, float]) -> tuple[float, float]:
     x, y = xy
     return (
         math.degrees(math.atan2(y, x)),
