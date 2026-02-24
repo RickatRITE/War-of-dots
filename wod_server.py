@@ -69,12 +69,14 @@ class MarchingSquares:
 
 
 class Brush:
-    def __init__(self, radius=40, strength=1.0, falloff=1.0) -> None:
+    def __init__(self, radius: float = 40, strength: float = 1.0, falloff: float = 1.0) -> None:
         self.radius = radius
         self.strength = strength
         self.falloff = falloff
 
-    def apply(self, marching_squares, pos, target_value) -> None:
+    def apply(
+        self, marching_squares: MarchingSquares, pos: tuple[float, float], target_value: float
+    ) -> None:
         mx, my = pos
         cs = CELL_SIZE
         r = float(self.radius)
