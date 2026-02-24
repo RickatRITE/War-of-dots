@@ -630,27 +630,13 @@ class Environment:
                     city.timer = 0
 
 
-class Troop:
-    def __init__(
-        self,
-        position: tuple[float, float],
-        owner: Player,
-        path: list[Any] | None = None,
-    ) -> None:
-        self.position = position
-        self.health = 100
-        path = path if path is not None else []
-        self.owner = owner
-        self.id = id(self)
-
-
 class City:
     def __init__(self, position: tuple[float, float]) -> None:
         self.position = position
         self.timer = 0
         self.owner: Player | None = None
         self.id = id(self)
-        self.path = []
+        self.path: list[Any] = []
 
 
 class Player:
@@ -669,8 +655,22 @@ class Player:
         self.vision.grid = [row[:] for row in environment.default_vision]
 
 
+class Troop:
+    def __init__(
+        self,
+        position: tuple[float, float],
+        owner: Player,
+        path: list[Any] | None = None,
+    ) -> None:
+        self.position = position
+        self.health = 100
+        self.path = path if path is not None else []
+        self.owner = owner
+        self.id = id(self)
+
+
 class Game:
-    def __init__(self):
+    def __init__(self) -> None:
         self.FPS = 45
         self.last_time = time.perf_counter()
         self.frame_time = 1 / self.FPS
