@@ -349,12 +349,14 @@ class Environment:
             [c.position for c in self.cities],
         )
 
-    def get_terrain_name(self, value, fvalue):
+    def get_terrain_name(self, value: float, fvalue: float) -> str:
+        name = "forest"
         if fvalue > THRESHOLD:
-            return "forest"
-        for name, v in reversed(TERRAIN_VALUES.items()):
+            return name
+        for k, v in reversed(TERRAIN_VALUES.items()):
             if value > v:
-                return name
+                name = k
+        return name
 
     def update_troops(self, paths_to_apply):  # split into more functions ?
         self.players_in_cities = [[] for _ in self.cities]
