@@ -6,6 +6,7 @@ import random
 import socket
 import threading
 import time
+from typing import Any
 
 import perlin_noise
 import typer
@@ -305,7 +306,12 @@ class Environment:
                     + (0.8 if forest_value > 0.6 else 0.0)
                 )
 
-    def draw_info(self, player_num: int) -> None:
+    def draw_info(self, player_num: int) -> tuple[
+        list[list[float]],
+        list[list[float]],
+        list[Any],
+        list[Any],
+    ]:
         ply = self.players[player_num]
         vision_grid = ply.vision.grid
         border_grid = ply.border.grid
@@ -344,7 +350,13 @@ class Environment:
 
         return vision_grid, border_grid, troops, cities
 
-    def get_terrain_info(self):
+    def get_terrain_info(
+        self,
+    ) -> tuple[
+        list[list[float]],
+        list[list[float]],
+        list[tuple[float, float]],
+    ]:
         return (
             self.terrain_marching.grid,
             self.forest_marching.grid,
@@ -360,7 +372,7 @@ class Environment:
                 name = k
         return name
 
-    def update_troops(self, paths_to_apply):  # split into more functions ?
+    def update_troops(self, paths_to_apply: list[tuple[Any, Any]]) -> None:
         self.players_in_cities = [[] for _ in self.cities]
         troop_ids = [info[0] for info in paths_to_apply]
         troop_paths = [info[1] for info in paths_to_apply]
@@ -416,7 +428,7 @@ class Environment:
                                     )
                                     / len(sample_points)
                                 )
-                        border_avg = sum(border_avgs) / len(border_avgs)
+                        border_avg = int(sum(border_avgs) / len(border_avgs))
                     dist_penal = max(((city_dist + 250) / 1000), 0.5)
                     healing_power = (1 - (border_avg / 2)) - dist_penal
                 else:
@@ -563,7 +575,7 @@ class Environment:
                         on_terrain = new_terrain
 
                 if enemies_in_range:
-                    attack_power = self.terrain_attacks[on_terrain] / 25
+                    attack_power = int(self.terrain_attacks[on_terrain] / 25)
                     closest = min(enemies_in_range, key=lambda x: x[1])
                     closest[0].health -= attack_power
 
@@ -583,7 +595,7 @@ class Environment:
             for t in to_remove:
                 player.troops.remove(t)
 
-    def update_cities(self, paths_to_apply):
+    def update_cities(self, paths_to_apply: list[tuple[Any, Any]]) -> None:
         city_ids = [info[0] for info in paths_to_apply]
         city_paths = [info[1] for info in paths_to_apply]
         for i, city in enumerate(self.cities):
@@ -619,10 +631,15 @@ class Environment:
 
 
 class Troop:
-    def __init__(self, position, owner, path=None):
+    def __init__(
+        self,
+        position: tuple[float, float],
+        owner: Player,
+        path: list[Any] | None = None,
+    ) -> None:
         self.position = position
         self.health = 100
-        self.path = path if path is not None else []
+        path = path if path is not None else []
         self.owner = owner
         self.id = id(self)
 
