@@ -41,10 +41,10 @@ def xy_to_dir_dis(xy: tuple[float, float]) -> tuple[float, float]:
 
 
 class MarchingSquares:
-    def __init__(self):
+    def __init__(self) -> None:
         self.grid = [[0.0 for _ in range(COLS + 1)] for _ in range(ROWS + 1)]
 
-    def set_grid(self, new_grid):
+    def set_grid(self, new_grid: list[list[float]]) -> None:
         self.grid = new_grid
 
     def get_grid_value(self, x: float, y: float) -> float:
@@ -69,12 +69,12 @@ class MarchingSquares:
 
 
 class Brush:
-    def __init__(self, radius=40, strength=1.0, falloff=1.0):
+    def __init__(self, radius=40, strength=1.0, falloff=1.0) -> None:
         self.radius = radius
         self.strength = strength
         self.falloff = falloff
 
-    def apply(self, marching_squares, pos, target_value):
+    def apply(self, marching_squares, pos, target_value) -> None:
         mx, my = pos
         cs = CELL_SIZE
         r = float(self.radius)
@@ -112,7 +112,7 @@ class Brush:
 
 
 class Environment:
-    def __init__(self):
+    def __init__(self) -> None:
         self.terrain_speeds = {
             "water": 0.6,
             "forest": 0.8,
