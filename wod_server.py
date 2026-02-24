@@ -419,7 +419,7 @@ class Environment:
                     healing_power = (1 - (border_avg / 2)) - dist_penal
                 else:
                     healing_power = -0.5
-                troop.health += healing_power / 25
+                troop.health += int(healing_power / 25)
                 if troop.health > 100:
                     troop.health = 100
 
