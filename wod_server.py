@@ -130,7 +130,7 @@ class Environment:
         self.terrain_marching = MarchingSquares()
         self.forest_marching = MarchingSquares()
 
-        self.cities = []
+        self.cities: list[City] = []
 
         self.default_vision = [[0.0 for _ in range(COLS + 1)] for _ in range(ROWS + 1)]
         for y in range(COLS + 1):
@@ -223,7 +223,7 @@ class Environment:
         self.city_vision_brush = Brush(175, 1, 0)
         self.border_brush = Brush(40, 0.05, 0)
         self.city_border_brush = Brush(80, 0.05, 0)
-        self.players_in_cities = [[] for _ in self.cities]
+        self.players_in_cities: list[list[Player]] = [[] for _ in self.cities]
 
     def generate_terrain(self):
         def elevation_bias(x, y):
@@ -629,7 +629,7 @@ class City:
     def __init__(self, position):
         self.position = position
         self.timer = 0
-        self.owner = None
+        self.owner: Player | None = None
         self.id = id(self)
         self.path = []
 
