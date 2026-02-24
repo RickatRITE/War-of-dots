@@ -227,8 +227,8 @@ class Environment:
         self.city_border_brush = Brush(80, 0.05, 0)
         self.players_in_cities: list[list[Player]] = [[] for _ in self.cities]
 
-    def generate_terrain(self):
-        def elevation_bias(x, y):
+    def generate_terrain(self) -> None:
+        def elevation_bias(x: float, y: float) -> float:
             cx = ROWS / 2
             cy = COLS / 2
             dx = abs(x - cx)
@@ -255,7 +255,7 @@ class Environment:
 
                 self.forest_marching.grid[x][y] = (value - (plains_diff * 10)) - hill_diff * 10
 
-        def within_edges(cx, cy):
+        def within_edges(cx: int, cy: int) -> bool:
             edge_margin = int(1)
             return (
                 cx >= edge_margin
@@ -295,7 +295,7 @@ class Environment:
                 distance = max(2, distance - 2)
                 tries = 0
 
-    def generate_default_vision(self):
+    def generate_default_vision(self) -> None:
         for y in range(COLS + 1):
             for x in range(ROWS + 1):
                 terrain_value = self.terrain_marching.grid[x][y]
@@ -628,7 +628,7 @@ class Troop:
 
 
 class City:
-    def __init__(self, position):
+    def __init__(self, position: tuple[float, float]) -> None:
         self.position = position
         self.timer = 0
         self.owner: Player | None = None
@@ -637,7 +637,13 @@ class City:
 
 
 class Player:
-    def __init__(self, start_pos, color, environment):
+    def __init__(
+        self,
+        start_pos: tuple[float, float],
+        color: tuple[int, int, int],
+        environment: Environment,
+    ) -> None:
+
         self.start_pos = start_pos
         self.color = color
         self.troops = [Troop(self.start_pos, self)]
