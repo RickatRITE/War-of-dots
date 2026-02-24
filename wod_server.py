@@ -3,7 +3,7 @@
 import json
 import math
 import random
-import socket
+from socket import socket, gethostbyname, gethostname
 import threading
 import time
 from typing import Any
@@ -675,14 +675,14 @@ class Game:
         self.last_time = time.perf_counter()
         self.frame_time = 1 / self.FPS
         self.done = False
-        self.server = simple_socket.Server(socket.gethostbyname(str(socket.gethostname())), 1200)
+        self.server = simple_socket.Server(gethostbyname(str(gethostname())), 1200)
         self.environment = Environment()
-        self.player_inputs = [[] for i in range(PLAYERS)]
-        self.player_city_inputs = [[] for i in range(PLAYERS)]
+        self.player_inputs: list[list[Any]] = [[] for i in range(PLAYERS)]
+        self.player_city_inputs: list[list[Any]] = [[] for i in range(PLAYERS)]
         self.player_pause_requests = [False for i in range(PLAYERS)]
         self.started = False
 
-    def run_game(self, port: int = 0):
+    def run_game(self, port: int = 0) -> None:
         self.ready = True
         self.server.port = PORTS[port]
         print("ip: ", self.server.ip, ", port: ", self.server.port)
@@ -711,7 +711,7 @@ class Game:
             #     self.dots = len(self.environment.players[0].troops)
             #     print(self.dots)
 
-    def handle_player(self, player_number, conn, addr):
+    def handle_player(self, player_number: int, conn: socket, addr: str) -> None:
         self.server.send(
             [conn],
             json.dumps(
@@ -748,7 +748,7 @@ class Game:
                     self.player_inputs[player_number].extend(player_in[0])
                     self.player_city_inputs[player_number].extend(player_in[1])
 
-    def game_logic(self):
+    def game_logic(self) -> None:
         city_paths_to_apply = []
         for p_num in range(PLAYERS):
             if self.player_city_inputs[p_num]:
