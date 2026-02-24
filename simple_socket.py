@@ -52,9 +52,9 @@ class Server:
         self.server.bind(ADDR)
         self.conns: list[socket] = []
 
-    def lsn(self, conns: int = 0) -> None:
-        if conns > 0:
-            self.server.listen(conns)
+    def lsn(self, num_conns: int = 0) -> None:
+        if num_conns > 0:
+            self.server.listen(num_conns)
         else:
             self.server.listen()
 

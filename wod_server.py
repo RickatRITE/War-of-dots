@@ -689,7 +689,7 @@ class Game:
         print("starting server...")
         self.server.start()
         print("waiting for players...")
-        self.server.lsn(conns=PLAYERS)
+        self.server.lsn(num_conns=PLAYERS)
         for player_num in range(PLAYERS):
             conn, addr = self.server.accept()
             player_thread = threading.Thread(
