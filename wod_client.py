@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import json
+from typing import Any
 
 import pygame
 import typer
@@ -202,7 +203,7 @@ class Game:
         self.pan_start_mouse = (0, 0)
         self.pan_start_cam = (0.0, 0.0)
 
-        self.draw_info = None
+        self.draw_info: list[Any] = []
         self.player_input = [[], []]
         self.paths = []
         self.drawing_path = False
