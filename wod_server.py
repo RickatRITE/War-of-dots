@@ -305,8 +305,8 @@ class Environment:
                     + (0.8 if forest_value > 0.6 else 0.0)
                 )
 
-    def draw_info(self, player):
-        ply = self.players[player]
+    def draw_info(self, player_num: int) -> None:
+        ply = self.players[player_num]
         vision_grid = ply.vision.grid
         border_grid = ply.border.grid
         troops = []
@@ -321,7 +321,7 @@ class Environment:
             for c in self.cities
         ]
         for troop in [t for p in self.players for t in p.troops]:
-            ply = self.players[player]
+            ply = self.players[player_num]
 
             vision = ply.vision
             px, py = troop.position

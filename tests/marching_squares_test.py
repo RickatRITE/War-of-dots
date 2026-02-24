@@ -47,7 +47,7 @@ class MarchingSquaresTest(unittest.TestCase):
 
     def _check_draw(self, env: Environment) -> None:
         # We really should be getting back a DrawInfo @dataclass here.
-        di = env.draw_info(player=0)  # vision_grid, border_grid, troops, cities
+        di = env.draw_info(player_num=0)  # vision_grid, border_grid, troops, cities
         self.assertEqual([], di[2])
         red, blue = 0, 1
         self.assertEqual(
