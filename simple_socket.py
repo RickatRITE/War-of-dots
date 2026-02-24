@@ -1,4 +1,4 @@
-from socket import socket, AF_INET, SOCK_STREAM, IPPROTO_TCP, TCP_NODELAY
+from socket import AF_INET, IPPROTO_TCP, SOCK_STREAM, TCP_NODELAY, socket
 
 ####### https://docs.python.org/3/library/socket.html#socket.socket.sendfile #######
 # socket.gethostbyname(str(socket.gethostname()))#

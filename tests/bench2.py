@@ -3,11 +3,12 @@
 # Copyright 2026 John Hanley. MIT licensed.
 
 from time import time
+from typing import Any
 
 from constants import CELL_SIZE, WORLD_X, WORLD_Y
 from tests.bench import BenchmarkGame, add_troops
 from tests.marching_squares_test import DeterministicEnvironment
-from wod_server import dir_dis_to_xy, xy_to_dir_dis
+from wod_server import Player, dir_dis_to_xy, xy_to_dir_dis
 
 
 def manhattan_distance(position: tuple[float, float]) -> float:
@@ -17,7 +18,10 @@ def manhattan_distance(position: tuple[float, float]) -> float:
     return abs(x) + abs(y)
 
 
-def xy_is_within(thresh_distance, xy) -> tuple[bool, float, float]:
+def xy_is_within(
+    thresh_distance: float,
+    xy: tuple[float, float],
+) -> tuple[bool, float, float]:
     """In the common case, returns 'not within threshold' with no sqrt() calls."""
 
     # if manhattan_distance(xy) >= thresh_distance:
@@ -28,8 +32,8 @@ def xy_is_within(thresh_distance, xy) -> tuple[bool, float, float]:
 
 
 class DeterministicEnvironment2(DeterministicEnvironment):
-    def update_troops(self, paths_to_apply):  # split into more functions ?
-        self.players_in_cities = [[] for _ in self.cities]
+    def update_troops(self, paths_to_apply: list[tuple[Any, Any]]) -> None:
+        self.players_in_cities: list[list[Player]] = [[] for _ in self.cities]
         troop_ids = [info[0] for info in paths_to_apply]
         troop_paths = [info[1] for info in paths_to_apply]
         for player in self.players:

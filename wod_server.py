@@ -3,9 +3,9 @@
 import json
 import math
 import random
-from socket import socket, gethostbyname, gethostname
 import threading
 import time
+from socket import gethostbyname, gethostname, socket
 from typing import Any
 
 import perlin_noise

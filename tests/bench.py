@@ -10,7 +10,7 @@ from wod_server import Environment, Game, Troop
 
 
 class BenchmarkGame(Game):
-    def game_logic(self):
+    def game_logic(self) -> None:
         city_paths_to_apply = []
         for p_num in range(PLAYERS):
             if self.player_city_inputs[p_num]:
