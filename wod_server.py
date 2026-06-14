@@ -3,9 +3,10 @@
 import json
 import math
 import random
+import sys
 import threading
 import time
-from socket import gethostbyname, gethostname, socket
+from socket import gethostname, socket
 from typing import Any
 
 import perlin_noise
@@ -16,7 +17,6 @@ from constants import (
     CELL_SIZE,
     COLORS,
     COLS,
-    PLAYERS,
     PORTS,
     ROWS,
     TERRAIN_VALUES,
@@ -116,6 +116,8 @@ class Brush:
 
 class Environment:
     def __init__(self) -> None:
+        self.num_players = 0
+        self.players: list[Player] = []
         self.terrain_speeds = {
             "water": 0.6,
             "forest": 0.8,
@@ -142,6 +144,16 @@ class Environment:
 
         self.generate_terrain()
         self.generate_default_vision()
+        self.vision_brush = Brush(75, 1, 0)
+        self.city_vision_brush = Brush(175, 1, 0)
+        self.border_brush = Brush(40, 0.05, 0)
+        self.city_border_brush = Brush(80, 0.05, 0)
+        self.players_in_cities: list[list[Player]] = [[] for _ in self.cities]
+
+    def setup_players(self, num_players: int) -> None:
+        """Assign players to starting cities. Called once the player count is
+        known at runtime (after the lobby closes), not at construction time."""
+        self.num_players = num_players
         # 2 players left and right most cities
         # 3 players left-bottom, top, right-bottom
         # 4 players left-bottom, top-left, top-right, right-bottom
@@ -167,14 +179,14 @@ class Environment:
             key=lambda c: abs(c.position[0] - (ROWS * CELL_SIZE) / 2)
             + abs(c.position[1] - (COLS * CELL_SIZE) / 2),
         )
-        if PLAYERS == 2:
+        if self.num_players == 2:
             self.players = [
                 Player(left_city.position, COLORS[0], self),
                 Player(right_city.position, COLORS[1], self),
             ]
             left_city.owner = self.players[0]
             right_city.owner = self.players[1]
-        elif PLAYERS == 3:
+        elif self.num_players == 3:
             self.players = [
                 Player(left_bottom_city.position, COLORS[0], self),
                 Player(right_bottom_city.position, COLORS[1], self),
@@ -183,7 +195,7 @@ class Environment:
             left_bottom_city.owner = self.players[0]
             right_bottom_city.owner = self.players[1]
             top_city.owner = self.players[2]
-        elif PLAYERS == 4:
+        elif self.num_players == 4:
             self.players = [
                 Player(left_bottom_city.position, COLORS[0], self),
                 Player(top_left_city.position, COLORS[1], self),
@@ -194,7 +206,7 @@ class Environment:
             top_left_city.owner = self.players[1]
             top_right_city.owner = self.players[2]
             right_bottom_city.owner = self.players[3]
-        elif PLAYERS == 5:
+        elif self.num_players == 5:
             self.players = [
                 Player(left_bottom_city.position, COLORS[0], self),
                 Player(top_left_city.position, COLORS[1], self),
@@ -207,7 +219,7 @@ class Environment:
             middle_city.owner = self.players[2]
             top_right_city.owner = self.players[3]
             right_bottom_city.owner = self.players[4]
-        elif PLAYERS == 6:
+        elif self.num_players == 6:
             self.players = [
                 Player(left_bottom_city.position, COLORS[0], self),
                 Player(top_left_city.position, COLORS[1], self),
@@ -222,11 +234,6 @@ class Environment:
             middle_bottom_city.owner = self.players[3]
             top_right_city.owner = self.players[4]
             right_bottom_city.owner = self.players[5]
-        self.vision_brush = Brush(75, 1, 0)
-        self.city_vision_brush = Brush(175, 1, 0)
-        self.border_brush = Brush(40, 0.05, 0)
-        self.city_border_brush = Brush(80, 0.05, 0)
-        self.players_in_cities: list[list[Player]] = [[] for _ in self.cities]
 
     def generate_terrain(self) -> None:
         def elevation_bias(x: float, y: float) -> float:
@@ -670,34 +677,58 @@ class Troop:
 
 
 class Game:
-    def __init__(self) -> None:
+    def __init__(self, max_players: int = 6) -> None:
+        self.max_players = max_players
+        self.num_players = 0
         self.FPS = 45
         self.last_time = time.perf_counter()
         self.frame_time = 1 / self.FPS
         self.done = False
-        self.server = simple_socket.Server(gethostbyname(str(gethostname())), 1200)
+        # Bind to all interfaces so the server is reachable over Tailscale
+        # (and any other network), not just the local LAN address.
+        self.server = simple_socket.Server("0.0.0.0", 1200)
         self.environment = Environment()
-        self.player_inputs: list[list[Any]] = [[] for i in range(PLAYERS)]
-        self.player_city_inputs: list[list[Any]] = [[] for i in range(PLAYERS)]
-        self.player_pause_requests = [False for i in range(PLAYERS)]
+        self.player_inputs: list[list[Any]] = []
+        self.player_city_inputs: list[list[Any]] = []
+        self.player_pause_requests: list[bool] = []
         self.started = False
+        self.lobby_lock = threading.Lock()
+        self.lobby: list[socket] = []
+        self.start_requested = threading.Event()
 
     def run_game(self, port: int = 0) -> None:
         self.ready = True
         self.server.port = PORTS[port]
-        print("ip: ", self.server.ip, ", port: ", self.server.port)
+        hostname = gethostname()
+        print(f"listening on {self.server.ip}:{self.server.port}")
+        print(f"join code for players: {hostname}:{port}")
         print("starting server...")
         self.server.start()
-        print("waiting for players...")
-        self.server.lsn(num_conns=PLAYERS)
-        for player_num in range(PLAYERS):
-            conn, addr = self.server.accept()
-            player_thread = threading.Thread(
-                target=self.handle_player, args=(player_num, conn, addr)
-            )
-            player_thread.start()
-            print("player: ", player_num, " connected")
-        print("All players connected, starting game!")
+        self.server.lsn()
+        print(f"lobby open - waiting for players (max {self.max_players})...")
+        print("press ENTER in this window to start the game with whoever has joined (min 2).")
+        threading.Thread(target=self.accept_loop, daemon=True).start()
+        threading.Thread(target=self.watch_start_key, daemon=True).start()
+        # Hold in the lobby until the host starts the game or the lobby fills.
+        while True:
+            with self.lobby_lock:
+                count = len(self.lobby)
+            if count >= self.max_players:
+                print("max players reached!")
+                break
+            if self.start_requested.is_set():
+                if count >= 2:
+                    break
+                print("need at least 2 players to start; still waiting...")
+                self.start_requested.clear()
+            time.sleep(0.1)
+        with self.lobby_lock:
+            self.num_players = len(self.lobby)
+        self.environment.setup_players(self.num_players)
+        self.player_inputs = [[] for _ in range(self.num_players)]
+        self.player_city_inputs = [[] for _ in range(self.num_players)]
+        self.player_pause_requests = [False for _ in range(self.num_players)]
+        print(f"starting game with {self.num_players} players!")
         self.started = True
         while not self.done:
             if not all(self.player_pause_requests):
@@ -710,6 +741,36 @@ class Game:
             # elif delta_time < self.frame_time*0.75:
             #     self.dots = len(self.environment.players[0].troops)
             #     print(self.dots)
+
+    def accept_loop(self) -> None:
+        """Accept clients into the lobby until the game starts or it is full.
+        Each client is assigned its player number in connection order."""
+        while not self.started:
+            try:
+                conn, addr = self.server.accept()
+            except OSError:
+                break
+            with self.lobby_lock:
+                if self.started or len(self.lobby) >= self.max_players:
+                    self.server.close(conn)
+                    continue
+                player_number = len(self.lobby)
+                self.lobby.append(conn)
+            print(f"player {player_number} joined ({player_number + 1} in lobby)")
+            threading.Thread(
+                target=self.handle_player,
+                args=(player_number, conn, addr),
+                daemon=True,
+            ).start()
+
+    def watch_start_key(self) -> None:
+        """Let the host press ENTER (in the server terminal) to start the game.
+        Does nothing if stdin is not interactive (e.g. launched detached)."""
+        try:
+            for _line in sys.stdin:
+                self.start_requested.set()
+        except (EOFError, ValueError):
+            pass
 
     def handle_player(self, player_number: int, conn: socket, addr: str) -> None:
         self.server.send(
@@ -750,23 +811,27 @@ class Game:
 
     def game_logic(self) -> None:
         city_paths_to_apply = []
-        for p_num in range(PLAYERS):
+        for p_num in range(self.num_players):
             if self.player_city_inputs[p_num]:
                 city_paths_to_apply.extend(self.player_city_inputs[p_num])
-        self.player_city_inputs = [[] for i in range(PLAYERS)]
+        self.player_city_inputs = [[] for i in range(self.num_players)]
         self.environment.update_cities(city_paths_to_apply)
         paths_to_apply = []
-        for p_num in range(PLAYERS):
+        for p_num in range(self.num_players):
             if self.player_inputs[p_num]:
                 paths_to_apply.extend(self.player_inputs[p_num])
-        self.player_inputs = [[] for i in range(PLAYERS)]
+        self.player_inputs = [[] for i in range(self.num_players)]
         self.ready = False
         self.environment.update_troops(paths_to_apply)
         self.ready = True
 
 
-def main(port: int = 0) -> None:
-    game_play = Game()
+def main(port: int = 0, players: int = 6) -> None:
+    """Host a game. --players is the MAXIMUM number of players (2-6); the game
+    can be started with fewer once at least 2 have joined (press ENTER)."""
+    if not 2 <= players <= len(COLORS):
+        raise typer.BadParameter(f"players must be between 2 and {len(COLORS)}")
+    game_play = Game(players)
     game_play.run_game(port)
 
 

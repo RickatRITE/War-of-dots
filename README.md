@@ -3,12 +3,36 @@ DISCLAIMER: All credit goes to the original War of dots (https://warofdots.net/)
 
 INSTRUCTIONS TO PLAY:
 =====================
- - start server and enter number of players
- - enter port, just enter 0, use other numbers when you think other people are playing the game on the same lan/router/network
- - should say waiting for players, will connect with first `PLAYERS` (number of players you entered) number of clients
- - start the clients, a pygame window will pop up, ignore that for now that is where you play the game, find the console/command prompt that pops up with it
- - on each client type in the ip address then the port number you typed in the server (e.g. '0')
- - start playing by going back to the pygame window, have fun!
+
+Quick start (everyone on the same machine or LAN):
+ - Host the server in a terminal:
+       uv run python wod_server.py --players 6 --port 0
+   `--players` is the MAXIMUM (2-6). `--port` is a game index (0-99); use a
+   different index to run more than one game at once.
+ - The server prints a join code, e.g. `join code for players: <host>:0`, and
+   opens a lobby. Each player launches a client:
+       uv run python wod_client.py --ip <host>:0
+   `<host>` is the server's hostname/IP and `0` is the port index. (You can also
+   pass them separately: `--ip <host> --port 0`.)
+ - As clients connect, the server prints "player N joined". The client window is
+   black while it waits in the lobby - that's normal.
+ - START THE GAME: press ENTER in the server terminal to start with whoever has
+   joined (minimum 2), or just wait - the game auto-starts when the lobby fills
+   to `--players`. The map appears once the game starts. Have fun!
+
+Self-hosting over the internet (Tailscale):
+ - Put the host machine and every player on the same Tailscale tailnet (invite
+   players from the Tailscale admin console; they install Tailscale and sign in).
+ - The host runs the server exactly as above. There is no port forwarding or
+   firewall config to do - Tailscale handles connectivity.
+ - Players join using the host's Tailscale MagicDNS name or `100.x` IP as the
+   host part of the join code, e.g. `uv run python wod_client.py --ip myhost:0`.
+ - There is no authentication by design: your tailnet membership IS the access
+   control - only devices you've added can reach the server.
+
+Notes:
+ - No lobby reconnect: if a player drops before/at start, restart the server.
+ - When a player closes their window the game ends for everyone.
 
 DESCRIPTION:
 ============
