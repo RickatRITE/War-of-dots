@@ -592,6 +592,11 @@ class Game:
 
 
 def main(ip: str = "", port: int = 0) -> None:
+    # A join code may be given as a single "host:port" string (e.g. "rickpc:5"),
+    # where host is a Tailscale MagicDNS name or IP and port is the game index.
+    if ":" in ip:
+        ip, _, port_str = ip.rpartition(":")
+        port = int(port_str)
     game_play = Game("WAR OF DOTS")
     game_play.run_game(ip, port)
 
